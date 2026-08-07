@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dictado clínico · Laboratorios y estudios cardiovasculares</title>
+<meta name="description" content="Dicte laboratorios y estudios cardiovasculares y obtenga el texto con unidades listo para pegar en la historia clínica.">
+<style>
+  :root{
+    --navy:#0D2B45; --navy-2:#17405F; --amber:#C4923A; --amber-soft:#F3E7CE;
+    --paper:#F7F5F1; --line:#DDD7CC; --ink:#1B1B1B; --ok:#1D7A46; --alerta:#B3261E;
+    --radio:6px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font:15px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  header{background:var(--navy); color:#fff; padding:14px 0}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 16px}
+  .marca{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+  .marca h1{font-size:19px; margin:0; font-weight:600; letter-spacing:.2px}
+  .marca span{font-size:11px; text-transform:uppercase; letter-spacing:.18em; color:var(--amber)}
+  .sub{font-size:13px; opacity:.72; margin:4px 0 0}
+
+  main{padding:20px 0 60px}
+  .cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:22px}
+  @media (max-width:900px){ .cols{grid-template-columns:1fr} }
+
+  .rot{font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:#6C6A66; font-weight:700; margin-bottom:6px; display:block}
+
+  button{font:inherit; cursor:pointer; border:0; border-radius:var(--radio)}
+  .bmic{display:inline-flex; align-items:center; gap:9px; background:var(--navy); color:#fff; padding:12px 20px; border-radius:999px; font-weight:600; font-size:14px}
+  .bmic.on{background:var(--alerta)}
+  .bmic:disabled{opacity:.45; cursor:not-allowed}
+  .bppal{width:100%; background:var(--amber); color:#fff; padding:12px; font-weight:600; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px}
+  .bsec{background:#fff; border:1px solid var(--line); padding:8px 12px; font-size:13px; display:inline-flex; align-items:center; gap:7px}
+  .bcopy{background:var(--navy); color:#fff; padding:8px 14px; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:7px}
+  .bcopy.ok{background:var(--ok)}
+  button:focus-visible, textarea:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--navy-2); outline-offset:2px}
+
+  textarea, input, select{font:inherit; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:var(--radio); padding:8px}
+  #dictado{width:100%; min-height:190px; resize:vertical; line-height:1.6}
+
+  .barra{display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap}
+  .ondas{display:flex; align-items:flex-end; gap:3px; height:20px}
+  .ondas i{width:3px; height:100%; background:var(--amber); border-radius:2px; transform-origin:bottom; animation:onda .9s ease-in-out infinite}
+  .ondas i:nth-child(2){animation-delay:.12s} .ondas i:nth-child(3){animation-delay:.24s}
+  .ondas i:nth-child(4){animation-delay:.36s} .ondas i:nth-child(5){animation-delay:.48s}
+  @keyframes onda{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+  @media (prefers-reduced-motion:reduce){ .ondas i{animation:none; transform:scaleY(.6)} }
+
+  .opciones{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px}
+  .opciones input[type=text]{width:112px; padding:6px 8px; font-size:13px}
+  .opciones select{padding:6px 8px; font-size:13px}
+
+  /* --- bloques de resultados --- */
+  #bloques{max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:var(--radio); background:#fff}
+  .vacio{padding:34px 16px; text-align:center; color:#8B8880; font-size:14px}
+  .bloque + .bloque{border-top:8px solid var(--paper)}
+  .bhead{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--navy); color:#fff; padding:7px 10px}
+  .bhead b{font-size:12px; text-transform:uppercase; letter-spacing:.1em; font-weight:600; flex:1; min-width:120px}
+  .bhead.estudio{background:var(--navy-2)}
+  .bhead input{background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); color:#fff; padding:3px 7px; font-size:12px; width:112px}
+  .bhead input::placeholder{color:rgba(255,255,255,.6)}
+  .blibre{padding:8px 10px 2px}
+  .blibre textarea{width:100%; min-height:46px; font-size:13.5px; resize:vertical}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  tbody td{border-top:1px solid var(--line); padding:3px 5px; vertical-align:middle}
+  tbody input{border:1px solid transparent; width:100%; padding:5px 6px; background:transparent; border-radius:4px}
+  tbody input:hover{border-color:var(--line)}
+  .val{font-weight:700; color:var(--navy); text-align:right}
+  .uni{color:#5C5A55}
+  .nota{font-size:12px; color:#7A7770}
+  .xrow{background:none; color:#B9B5AD; font-size:17px; line-height:1; padding:2px 8px}
+  .xrow:hover{color:var(--alerta)}
+  .addrow{width:100%; padding:7px; background:#FBFAF8; border-top:1px solid var(--line); color:var(--navy); font-size:12.5px; font-weight:600}
+
+  .aviso{background:#FFF8E8; border:1px solid var(--amber); border-radius:var(--radio); padding:10px 12px; font-size:13.5px; margin-top:12px}
+  .aviso b{display:block; color:var(--navy); margin-bottom:4px}
+  .aviso ul{margin:0; padding-left:18px} .aviso li{margin:2px 0}
+  .err{background:#FBEEE6; border-color:var(--alerta)}
+
+  .salida{
+    background:#fff; border:1px solid var(--line); border-left:4px solid var(--amber);
+    border-radius:var(--radio); padding:12px; min-height:120px; white-space:pre-wrap;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13.5px; line-height:1.65;
+  }
+  .salida.placeholder{color:#A5A29B}
+  .pie{font-size:12px; color:#7A7770; margin-top:8px}
+  footer{border-top:1px solid var(--line); margin-top:30px; padding-top:14px; font-size:12px; color:#7A7770}
+  .oculto{display:none !important}
+  details.ayuda{margin-top:12px; font-size:13px}
+  details.ayuda summary{cursor:pointer; color:var(--navy-2); font-weight:600}
+  details.ayuda p{margin:8px 0 0; color:#5C5A55}
+  details.ayuda code{background:#fff; border:1px solid var(--line); border-radius:3px; padding:1px 5px; font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="marca">
+      <span>Consulta externa</span>
+      <h1>Dictado de laboratorios y estudios</h1>
+    </div>
+    <p class="sub">Lea en voz alta los resultados que trae el paciente. Se transcriben, se les asigna la unidad y quedan listos para pegar en la historia clínica.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="errBox" class="aviso err oculto"></div>
+
+  <div class="cols">
+    <!-- ============ Dictado ============ -->
+    <section>
+      <div class="barra">
+        <button id="btnMic" class="bmic">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
+          <span id="micTxt">Dictar</span>
+        </button>
+        <div id="ondas" class="ondas oculto"><i></i><i></i><i></i><i></i><i></i></div>
+        <button id="btnLimpiar" class="bsec">Empezar de nuevo</button>
+      </div>
+
+      <label class="rot" for="dictado">Dictado</label>
+      <textarea id="dictado" placeholder="Ejemplo: hemoglobina catorce coma dos, creatinina uno coma uno. Cateterismo derecho del doce de junio, presión arterial pulmonar media cuarenta y cinco, presión capilar pulmonar doce, gasto cardíaco cuatro coma dos, resistencia vascular pulmonar siete coma ocho unidades Wood…"></textarea>
+
+      <button id="btnOrganizar" class="bppal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+        Organizar resultados
+      </button>
+      <p class="pie" id="ayudaVoz"></p>
+
+      <div id="avisos" class="aviso oculto"></div>
+      <div id="sobrante" class="aviso oculto"></div>
+
+      <details class="ayuda">
+        <summary>Qué estudios reconoce</summary>
+        <p id="listaEstudios"></p>
+        <p>Nombre el estudio antes de sus datos: así <code>PAD</code> se interpreta como presión auricular derecha dentro de un cateterismo derecho y como presión arterial diastólica dentro de un MAPA.</p>
+      </details>
+    </section>
+
+    <!-- ============ Resultados ============ -->
+    <section>
+      <div class="opciones">
+        <label class="rot" style="margin:0" for="fecha">Fecha</label>
+        <input type="text" id="fecha" placeholder="DD/MM/AAAA" inputmode="numeric">
+        <select id="formato" aria-label="Formato del texto">
+          <option value="parrafo">Párrafo corrido</option>
+          <option value="categorias">Agrupado por categoría</option>
+          <option value="lineas">Una línea por dato</option>
+        </select>
+        <select id="orden" aria-label="Orden de los analitos">
+          <option value="categoria">Orden por categoría</option>
+          <option value="dictado">Orden del dictado</option>
+        </select>
+        <select id="decimal" aria-label="Separador decimal">
+          <option value=",">Decimal con coma</option>
+          <option value=".">Decimal con punto</option>
+        </select>
+      </div>
+
+      <div id="bloques"><div class="vacio">Los resultados aparecen aquí. Todo es editable antes de copiar.</div></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 6px">
+        <span class="rot" style="margin:0">Texto para la historia clínica</span>
+        <button id="btnCopiar" class="bcopy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <span id="copiarTxt">Copiar</span>
+        </button>
+      </div>
+      <div id="salida" class="salida placeholder">Aquí aparece el texto final, listo para pegar.</div>
+      <p class="pie">Compare los valores con el reporte impreso antes de guardarlos en la historia clínica.</p>
+    </section>
+  </div>
+
+  <footer>
+    <p>Funciona sin conexión y sin enviar datos a ningún servidor: todo el procesamiento ocurre en este navegador. No incluya el nombre ni la identificación del paciente en el dictado.</p>
+    <p id="pieVersion" style="margin-top:6px"></p>
+  </footer>
+</main>
+
+<script src="parser.js?v=2.0"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var LP = window.LabParser;
+  var estado = { resultados: [], estudios: [], avisos: [], sobra: "" };
+
+  /* --- El motor y la página deben ser de la misma versión --- */
+  var REQUIERE = "2.0";
+  function fallaDeCarga(mensaje){
+    var b = $("errBox");
+    b.innerHTML = "<b>La aplicación no puede funcionar</b>" + mensaje;
+    b.classList.remove("oculto");
+    $("btnMic").disabled = true;
+    $("btnOrganizar").disabled = true;
+    $("btnOrganizar").style.opacity = ".45";
+    $("ayudaVoz").textContent = "";
+  }
+  if(!LP){
+    fallaDeCarga("No se encontró <code>parser.js</code>. Debe estar en la misma carpeta que <code>index.html</code>, con ese nombre exacto y en minúsculas.");
+    return;
+  }
+  if(LP.VERSION !== REQUIERE){
+    fallaDeCarga("Esta página necesita el motor " + REQUIERE + " y encontró " +
+      (LP.VERSION ? "el " + LP.VERSION : "una versión anterior") +
+      ". Suba de nuevo <code>parser.js</code> e <code>index.html</code> juntos y recargue con Ctrl+F5 (Mac: Cmd+Shift+R).");
+    return;
+  }
+
+  /* --- Si algo falla en tiempo de ejecución, que se vea --- */
+  function protegido(fn){
+    return function(){
+      try{ return fn.apply(this, arguments); }
+      catch(err){
+        mostrarError("Ocurrió un error al procesar el dictado: " + esc(err.message) +
+          ". El texto dictado no se perdió: sigue en el cuadro de arriba.");
+        if(window.console) console.error(err);
+      }
+    };
+  }
+
+  /* ---------- Preferencias ---------- */
+  var PREF = "dictadoLabs.prefs";
+  function cargarPrefs(){
+    try{
+      var p = JSON.parse(localStorage.getItem(PREF) || "{}");
+      if(p.formato) $("formato").value = p.formato;
+      if(p.orden)   $("orden").value   = p.orden;
+      if(p.decimal) $("decimal").value = p.decimal;
+    }catch(e){}
+  }
+  function guardarPrefs(){
+    try{
+      localStorage.setItem(PREF, JSON.stringify({
+        formato:$("formato").value, orden:$("orden").value, decimal:$("decimal").value
+      }));
+    }catch(e){}
+  }
+
+  function mostrarError(msg){
+    var b = $("errBox");
+    if(!msg){ b.classList.add("oculto"); return; }
+    b.innerHTML = "<b>Revise esto</b>" + msg;
+    b.classList.remove("oculto");
+  }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
+
+  /* ---------- Reconocimiento de voz ---------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, escuchando = false, base = "";
+
+  if(!SR){
+    $("btnMic").disabled = true;
+    $("ayudaVoz").textContent = "Este navegador no reconoce voz. Use el dictado del teclado del sistema (Windows: tecla Windows + H; celular: micrófono del teclado) sobre el cuadro de arriba; el resto funciona igual.";
+  } else {
+    $("ayudaVoz").textContent = "Diga el nombre del estudio y enseguida sus datos. No hace falta decir las unidades.";
+    rec = new SR();
+    rec.lang = "es-CO"; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = function(e){
+      var interim = "", final = "";
+      for(var i = e.resultIndex; i < e.results.length; i++){
+        var t = e.results[i][0].transcript;
+        if(e.results[i].isFinal) final += t + " "; else interim += t;
+      }
+      if(final) base = (base + " " + final).replace(/\s+/g," ").trim();
+      $("dictado").value = (base + (interim ? " " + interim : "")).trim();
+    };
+    rec.onerror = function(e){
+      if(e.error === "not-allowed" || e.error === "service-not-allowed"){
+        detener();
+        mostrarError("El navegador bloqueó el micrófono. Autorice el permiso en el candado de la barra de direcciones, o dicte con el teclado del sistema sobre el cuadro de texto.");
+      } else if(e.error === "network"){
+        mostrarError("El reconocimiento de voz perdió la conexión. Chrome necesita internet para transcribir; puede seguir escribiendo o dictando con el teclado.");
+      }
+    };
+    rec.onend = function(){ if(escuchando){ try{ rec.start(); }catch(e){} } };
+  }
+  function detener(){
+    escuchando = false;
+    $("btnMic").classList.remove("on");
+    $("micTxt").textContent = "Dictar";
+    $("ondas").classList.add("oculto");
+    try{ rec && rec.stop(); }catch(e){}
+  }
+  function iniciar(){
+    mostrarError("");
+    base = $("dictado").value.trim();
+    escuchando = true;
+    $("btnMic").classList.add("on");
+    $("micTxt").textContent = "Detener";
+    $("ondas").classList.remove("oculto");
+    try{ rec.start(); }catch(e){}
+  }
+  $("btnMic").addEventListener("click", function(){
+    if(escuchando){ detener(); organizar(); } else { iniciar(); }
+  });
+
+  /* ---------- Organizar ---------- */
+  var organizar = function(){
+    var texto = $("dictado").value.trim();
+    if(!texto){ mostrarError("No hay dictado. Dicte o escriba los resultados primero."); return; }
+    mostrarError("");
+    var d = LP.analizar(texto);
+    estado.resultados = d.resultados;
+    estado.estudios   = d.estudios;
+    estado.avisos     = d.avisos;
+    estado.sobra      = d.sinInterpretar;
+    if(d.fecha) $("fecha").value = d.fecha;
+    pintar();
+  };
+  organizar = protegido(organizar);
+  $("btnOrganizar").addEventListener("click", organizar);
+  document.addEventListener("keydown", function(e){
+    if((e.ctrlKey || e.metaKey) && e.key === "Enter"){ e.preventDefault(); organizar(); }
+  });
+  $("btnLimpiar").addEventListener("click", function(){
+    detener(); base = ""; $("dictado").value = ""; $("fecha").value = "";
+    estado = { resultados:[], estudios:[], avisos:[], sobra:"" };
+    mostrarError(""); pintar();
+  });
+
+  /* ---------- Pintar ---------- */
+  function filaHTML(r, i){
+    return '<tr>'+
+      '<td><input data-i="'+i+'" data-campo="nom" value="'+esc(r.nom)+'" aria-label="Nombre"></td>'+
+      '<td style="width:96px"><input class="val" data-i="'+i+'" data-campo="valor" value="'+esc(r.valor)+'" aria-label="Valor"></td>'+
+      '<td style="width:104px"><input class="uni" data-i="'+i+'" data-campo="uni" value="'+esc(r.uni)+'" aria-label="Unidad"></td>'+
+      '<td style="width:92px"><input class="nota" data-i="'+i+'" data-campo="nota" value="'+esc(r.nota||"")+'" placeholder="nota" aria-label="Nota"></td>'+
+      '<td style="width:30px"><button class="xrow" data-borrar="'+i+'" title="Quitar" aria-label="Quitar">&times;</button></td>'+
+    '</tr>';
+  }
+
+  var pintar = protegido(function(){
+    var cont = $("bloques");
+    var labs = [], idxLab = [];
+    estado.resultados.forEach(function(r,i){ if(r.grupo !== "estudio"){ labs.push(r); idxLab.push(i); } });
+
+    if(!estado.resultados.length && !estado.estudios.length){
+      cont.innerHTML = '<div class="vacio">Los resultados aparecen aquí. Todo es editable antes de copiar.</div>';
+    } else {
+      var html = "";
+      if(labs.length){
+        html += '<div class="bloque"><div class="bhead"><b>Laboratorios</b></div><table><tbody>'+
+                labs.map(function(r,k){ return filaHTML(r, idxLab[k]); }).join("")+
+                '</tbody></table></div>';
+      }
+      estado.estudios.forEach(function(e, ei){
+        var filas = "", n = 0;
+        estado.resultados.forEach(function(r,i){
+          if(r.grupo === "estudio" && r.cat === e.nom){ filas += filaHTML(r, i); n++; }
+        });
+        html += '<div class="bloque">'+
+          '<div class="bhead estudio"><b>'+esc(e.nom)+'</b>'+
+            '<input data-est="'+ei+'" data-campo="fecha" value="'+esc(e.fecha||"")+'" placeholder="DD/MM/AAAA" aria-label="Fecha del estudio"></div>'+
+          '<div class="blibre"><textarea data-est="'+ei+'" data-campo="texto" placeholder="Descripción libre del estudio">'+esc(e.texto||"")+'</textarea></div>'+
+          (n ? '<table><tbody>'+filas+'</tbody></table>' : '')+
+          '<button class="addrow" data-addest="'+ei+'">+ Agregar variable a '+esc(e.nom)+'</button>'+
+        '</div>';
+      });
+      html += '<button class="addrow" id="btnFilaLab">+ Agregar analito de laboratorio</button>';
+      cont.innerHTML = html;
+    }
+
+    if(estado.avisos.length){
+      $("avisos").innerHTML = "<b>Revisar antes de pegar</b><ul>"+
+        estado.avisos.map(function(a){ return "<li>"+esc(a)+"</li>"; }).join("")+"</ul>";
+      $("avisos").classList.remove("oculto");
+    } else $("avisos").classList.add("oculto");
+
+    if(estado.sobra){
+      $("sobrante").innerHTML = "<b>Dictado que no se pudo clasificar</b>"+esc(estado.sobra)+
+        "<br><span style='font-size:12px;color:#7A7770'>Agréguelo a mano si hace falta.</span>";
+      $("sobrante").classList.remove("oculto");
+    } else $("sobrante").classList.add("oculto");
+
+    redactar();
+  });
+
+  /* ---------- Edición ---------- */
+  $("bloques").addEventListener("input", function(e){
+    var t = e.target, i = t.getAttribute("data-i"), ei = t.getAttribute("data-est");
+    if(i !== null){ estado.resultados[+i][t.getAttribute("data-campo")] = t.value; redactar(); return; }
+    if(ei !== null){ estado.estudios[+ei][t.getAttribute("data-campo")] = t.value; redactar(); }
+  });
+  $("bloques").addEventListener("click", function(e){
+    var b = e.target.closest("[data-borrar]");
+    if(b){ estado.resultados.splice(+b.getAttribute("data-borrar"), 1); pintar(); return; }
+    var a = e.target.closest("[data-addest]");
+    if(a){
+      var est = estado.estudios[+a.getAttribute("data-addest")];
+      estado.resultados.push({ grupo:"estudio", cat:est.nom, nom:"", valor:"", uni:"" });
+      pintar(); enfocarUltimo(); return;
+    }
+    if(e.target.id === "btnFilaLab"){
+      estado.resultados.push({ grupo:"lab", cat:"Otros", nom:"", valor:"", uni:"" });
+      pintar(); enfocarUltimo();
+    }
+  });
+  function enfocarUltimo(){
+    var campos = $("bloques").querySelectorAll('input[data-campo="nom"]');
+    if(campos.length) campos[campos.length-1].focus();
+  }
+
+  /* ---------- Salida ---------- */
+  var redactar = protegido(function(){
+    var texto = LP.redactar(
+      { resultados: estado.resultados.filter(function(r){ return r.nom && String(r.valor).trim(); }),
+        estudios: estado.estudios },
+      { formato:$("formato").value, decimal:$("decimal").value, orden:$("orden").value, fecha:$("fecha").value }
+    );
+    var s = $("salida");
+    if(texto){ s.textContent = texto; s.classList.remove("placeholder"); }
+    else { s.textContent = "Aquí aparece el texto final, listo para pegar."; s.classList.add("placeholder"); }
+  });
+  ["formato","orden","decimal"].forEach(function(id){
+    $(id).addEventListener("change", function(){ guardarPrefs(); redactar(); });
+  });
+  $("fecha").addEventListener("input", redactar);
+
+  $("btnCopiar").addEventListener("click", function(){
+    var s = $("salida");
+    if(s.classList.contains("placeholder")) return;
+    var txt = s.textContent;
+    function listo(){
+      $("btnCopiar").classList.add("ok"); $("copiarTxt").textContent = "Copiado";
+      setTimeout(function(){ $("btnCopiar").classList.remove("ok"); $("copiarTxt").textContent = "Copiar"; }, 1700);
+    }
+    function respaldo(){
+      var ta = document.createElement("textarea");
+      ta.value = txt; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); listo(); }
+      catch(e){ mostrarError("No se pudo copiar automáticamente. Seleccione el texto y use Ctrl+C."); }
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(listo, respaldo);
+    } else respaldo();
+  });
+
+  $("listaEstudios").textContent = LP.ESTUDIOS.map(function(e){ return e.nom; }).join(" · ") + ".";
+  $("pieVersion").textContent = "Motor " + LP.VERSION + " · " + LP.ESTUDIOS.length + " estudios y " + LP.DICCIONARIO.length + " analitos reconocidos.";
+  cargarPrefs();
+  pintar();
+})();
+</script>
+</body>
+</html>
